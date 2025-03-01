@@ -25,7 +25,9 @@ export async function POST(request: Request) {
         timestamp: new Date().toISOString()
       }
     });
-  } catch (error) {
+  } catch (err) {
+    // Use the error variable
+    console.error("Custom analysis error:", err);
     return NextResponse.json(
       { error: "Failed to perform custom analysis" },
       { status: 500 }

@@ -25,7 +25,9 @@ export async function POST(request: Request) {
         timestamp: new Date().toISOString()
       }
     });
-  } catch (error) {
+  } catch (err) {
+    // Use the error variable
+    console.error("Heading analysis error:", err);
     return NextResponse.json(
       { error: "Failed to analyze headings" },
       { status: 500 }

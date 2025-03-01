@@ -14,6 +14,14 @@ export function AnalysisAgents() {
     setOpenSection(openSection === section ? null : section);
   };
 
+  if (loading) {
+    return (
+      <div className="border rounded-lg p-8 text-center bg-muted/30 h-[70vh] flex items-center justify-center">
+        <p className="text-muted-foreground">Loading analysis...</p>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="border rounded-lg p-8 text-center bg-muted/30 h-[70vh] flex items-center justify-center">
