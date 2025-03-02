@@ -19,4 +19,10 @@ module.exports = {
       rootDir: '.',
     },
   },
+  ignorePatterns: [
+    'node_modules',
+    '.next',
+    'out',
+    'public'
+  ]
 }; 

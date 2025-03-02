@@ -1,29 +1,48 @@
-import { OpenAIStream, StreamingTextResponse } from 'ai';
-import { Configuration, OpenAIApi } from 'openai-edge';
+import OpenAI from 'openai';
+import { NextResponse } from 'next/server';
 
-// Create an OpenAI API client
-const config = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(config);
 
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
+  try {
+    const { prompt } = await req.json();
 
-  // Ask OpenAI for a streaming completion
-  const response = await openai.createCompletion({
-    model: 'gpt-3.5-turbo-instruct',
-    stream: true,
-    temperature: 0.6,
-    max_tokens: 300,
-    prompt: prompt,
-  });
-
-  // Convert the response into a friendly text-stream
-  const stream = OpenAIStream(response);
-
-  // Respond with the stream
-  return new StreamingTextResponse(stream);
-} 
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an AI writing assistant that continues existing text based on context from prior text. ' +
+            'Give more weight/priority to the later characters than the beginning ones. ' +
+            'Limit your response to no more than 200 characters, but make sure to construct complete sentences.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      stream: false,
+      n: 1,
+    });
+    
+    // Extract the completion text
+    const completionText = response.choices[0]?.message?.content || '';
+    
+    return NextResponse.json({ completion: completionText });
+  } catch (error) {
+    console.error('AI generation error:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate text' },
+      { status: 500 }
+    );
+  }
+}
