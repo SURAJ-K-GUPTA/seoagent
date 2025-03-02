@@ -22,6 +22,7 @@ import { JSONContent } from '@tiptap/react';
 import { useDebouncedCallback } from 'use-debounce';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { marked } from 'marked';
 
 // Define the suggestion type
 interface Suggestion {
@@ -49,25 +50,113 @@ export function NovelEditor() {
 
   // Process content when data changes
   useEffect(() => {
-    if (data?.content) {
-      // Create a simple document structure
-      const doc = {
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
+    const processContent = async () => {
+      if (data) {
+        try {
+          // Clean markdown content function
+          const cleanMarkdown = (text: string) => {
+            return text
+              // Remove image markdown
+              .replace(/!\[.*?\]\(.*?\)/g, '')
+              // Convert links to just their text content
+              .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+              // Remove backslashes before markdown characters
+              .replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1');
+          };
+          
+          // Create document with title and meta description
+          const documentContent = [
+            {
+              type: 'heading',
+              attrs: { level: 1 },
+              content: [{ type: 'text', text: data.title || 'Untitled' }]
+            },
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: data.metaDescription || '' }]
+            }
+          ];
+
+          // Process full content
+          if (data.content) {
+            // Process all content, not just specific lines
+            const contentLines = data.content.split('\n');
+            
+            let currentParagraph = '';
+            
+            // Process line by line to properly handle text flow
+            contentLines.forEach((line, index) => {
+              const trimmedLine = cleanMarkdown(line.trim());
+              
+              // Check for headings
+              const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
+              
+              if (headingMatch) {
+                // If we have accumulated paragraph text, add it first
+                if (currentParagraph) {
+                  documentContent.push({
+                    type: 'paragraph',
+                    content: [{ type: 'text', text: currentParagraph }]
+                  });
+                  currentParagraph = '';
+                }
+                
+                // Then add the heading
+                const level = headingMatch[1].length;
+                const text = headingMatch[2];
+                documentContent.push({
+                  type: 'heading',
+                  attrs: { level: Math.min(level, 6) },
+                  content: [{ type: 'text', text }]
+                });
+              }
+              // If line is empty and we have paragraph content
+              else if (!trimmedLine && currentParagraph) {
+                // End current paragraph
+                documentContent.push({
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: currentParagraph }]
+                });
+                currentParagraph = '';
+              }
+              // Otherwise accumulate text
+              else if (trimmedLine) {
+                if (currentParagraph) currentParagraph += ' ';
+                currentParagraph += trimmedLine;
+              }
+            });
+            
+            // Add any remaining paragraph text
+            if (currentParagraph) {
+              documentContent.push({
+                type: 'paragraph',
+                content: [{ type: 'text', text: currentParagraph }]
+              });
+            }
+          }
+          
+          setContent({
+            type: 'doc',
+            content: documentContent
+          });
+        } catch (error) {
+          console.error('Error processing content:', error);
+          // Include full content in fallback
+          setContent({
+            type: 'doc',
             content: [
               {
-                type: 'text',
-                text: data.content
+                type: 'paragraph',
+                content: [{ type: 'text', text: data.content || 'No content available' }]
               }
             ]
-          }
-        ]
-      };
-      setContent(doc);
-    }
-  }, [data?.content]);
+          });
+        }
+      }
+    };
+    
+    processContent();
+  }, [data]);
 
   // Set ready state after component mounts
   useEffect(() => {
@@ -212,7 +301,7 @@ export function NovelEditor() {
                     placeholder: 'Start editing content...',
                   }),
                   Markdown.configure({
-                    html: true,
+                    html: false,
                     transformPastedText: true,
                     transformCopiedText: true
                   })
