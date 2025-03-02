@@ -9,6 +9,7 @@ interface WebsiteData {
   headings: { level: number; text: string; position: number }[];
   metaKeywords: string[];
   readabilityScore: number;
+  wordCount: number;
 }
 
 interface WebsiteState {

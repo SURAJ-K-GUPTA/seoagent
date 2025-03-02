@@ -3,10 +3,21 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { url, parameters } = body;
+    const { url, parameters, suggestion } = body;
     
-    // Here you would implement custom analysis logic based on parameters
-    // This is a placeholder response
+    // If a suggestion is provided, apply it
+    if (suggestion) {
+      // Here you would implement logic to apply the suggestion
+      // For example, update a database or external service
+      
+      return NextResponse.json({
+        success: true,
+        message: "Custom suggestion applied successfully",
+        appliedSuggestion: suggestion
+      });
+    }
+    
+    // Otherwise, perform regular custom analysis
     return NextResponse.json({
       success: true,
       url,
