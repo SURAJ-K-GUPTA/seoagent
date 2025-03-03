@@ -50,22 +50,12 @@ export function NovelEditor() {
 
   // Process content when data changes
   useEffect(() => {
-    const processContent = async () => {
-      if (data) {
-        try {
-          // Clean markdown content function
-          const cleanMarkdown = (text: string) => {
-            return text
-              // Remove image markdown
-              .replace(/!\[.*?\]\(.*?\)/g, '')
-              // Convert links to just their text content
-              .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-              // Remove backslashes before markdown characters
-              .replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1');
-          };
-          
-          // Create document with title and meta description
-          const documentContent = [
+    if (data && isReady) {
+      try {
+        // Create the base document structure
+        const formattedContent = {
+          type: 'doc',
+          content: [
             {
               type: 'heading',
               attrs: { level: 1 },
@@ -75,88 +65,32 @@ export function NovelEditor() {
               type: 'paragraph',
               content: [{ type: 'text', text: data.metaDescription || '' }]
             }
-          ];
+          ]
+        };
 
-          // Process full content
-          if (data.content) {
-            // Process all content, not just specific lines
-            const contentLines = data.content.split('\n');
-            
-            let currentParagraph = '';
-            
-            // Process line by line to properly handle text flow
-            contentLines.forEach((line, index) => {
-              const trimmedLine = cleanMarkdown(line.trim());
-              
-              // Check for headings
-              const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
-              
-              if (headingMatch) {
-                // If we have accumulated paragraph text, add it first
-                if (currentParagraph) {
-                  documentContent.push({
-                    type: 'paragraph',
-                    content: [{ type: 'text', text: currentParagraph }]
-                  });
-                  currentParagraph = '';
-                }
-                
-                // Then add the heading
-                const level = headingMatch[1].length;
-                const text = headingMatch[2];
-                documentContent.push({
-                  type: 'heading',
-                  attrs: { level: Math.min(level, 6) },
-                  content: [{ type: 'text', text }]
-                });
-              }
-              // If line is empty and we have paragraph content
-              else if (!trimmedLine && currentParagraph) {
-                // End current paragraph
-                documentContent.push({
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: currentParagraph }]
-                });
-                currentParagraph = '';
-              }
-              // Otherwise accumulate text
-              else if (trimmedLine) {
-                if (currentParagraph) currentParagraph += ' ';
-                currentParagraph += trimmedLine;
-              }
-            });
-            
-            // Add any remaining paragraph text
-            if (currentParagraph) {
-              documentContent.push({
-                type: 'paragraph',
-                content: [{ type: 'text', text: currentParagraph }]
-              });
-            }
-          }
+        // Set initial content structure
+        setContent(formattedContent);
+        
+        // After the editor initializes, insert the HTML content
+        const timer = setTimeout(() => {
+          const editorElement = document.querySelector('.ProseMirror');
+          const editor = (editorElement as any)?.editor;
           
-          setContent({
-            type: 'doc',
-            content: documentContent
-          });
-        } catch (error) {
-          console.error('Error processing content:', error);
-          // Include full content in fallback
-          setContent({
-            type: 'doc',
-            content: [
-              {
-                type: 'paragraph',
-                content: [{ type: 'text', text: data.content || 'No content available' }]
-              }
-            ]
-          });
-        }
+          if (editor) {
+            // Parse and insert HTML content after the first two elements
+            const pos = editor.state.doc.nodeAt(2)?.pos || editor.state.doc.content.size;
+            editor.commands.insertContentAt(pos, data.content, {
+              parseOptions: { preserveWhitespace: 'full' }
+            });
+          }
+        }, 100);
+        
+        return () => clearTimeout(timer); // Clean up timeout
+      } catch (error) {
+        console.error('Error formatting content:', error);
       }
-    };
-    
-    processContent();
-  }, [data]);
+    }
+  }, [data, isReady]); // Make sure both dependencies are properly defined
 
   // Set ready state after component mounts
   useEffect(() => {
