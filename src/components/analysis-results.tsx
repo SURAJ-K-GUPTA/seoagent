@@ -54,8 +54,7 @@ export function AnalysisResults() {
       <div className="p-4 border rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Content Preview</h3>
         <div className="max-h-96 overflow-y-auto prose prose-sm dark:prose-invert">
-          {data.content.substring(0, 1000)}
-          {data.content.length > 1000 && '...'}
+          {data.content}
         </div>
       </div>
       

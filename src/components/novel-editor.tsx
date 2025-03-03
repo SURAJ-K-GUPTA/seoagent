@@ -23,6 +23,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { marked } from 'marked';
+import { BubbleMenu } from './bubble-menu';
 
 // Define the suggestion type
 interface Suggestion {
@@ -183,7 +184,7 @@ export function NovelEditor() {
         <div className="col-span-2 overflow-auto border-r">
           {isReady && content ? (
             <EditorRoot>
-                <EditorBubble className="flex bg-white shadow-xl border border-muted rounded-lg overflow-hidden divide-x">
+                {/* <EditorBubble className="flex bg-white shadow-xl border border-muted rounded-lg overflow-hidden divide-x">
                   <EditorBubbleItem
                   onSelect={(props: any) => {
                     generateSuggestion(props.editor);
@@ -205,7 +206,7 @@ export function NovelEditor() {
                     <Save className="h-4 w-4" />
                   </Button>
                 </EditorBubbleItem>
-              </EditorBubble>
+              </EditorBubble> */}
               <EditorContent
                 onUpdate={debouncedUpdates}
                 initialContent={content}
@@ -246,7 +247,7 @@ export function NovelEditor() {
                     class: 'prose-lg dark:prose-invert focus:outline-none max-w-full h-full p-4',
                   }
                 }}
-              />
+              ><BubbleMenu /></EditorContent>
             </EditorRoot>
           ) : (
             <div className="flex items-center justify-center h-full">
